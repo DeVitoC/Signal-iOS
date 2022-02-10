@@ -21,8 +21,6 @@ class MessageReactionPicker: UIStackView {
     var selectedBackgroundHeight: CGFloat { return pickerDiameter - 4 }
     let configureMode: Bool
 
-    // MARK: Change 1
-//    private var buttonForEmoji = [String: OWSFlatButton]()
     private var buttonForEmoji = [(emoji: String, button: OWSFlatButton)]()
     private var selectedEmoji: EmojiWithSkinTones?
     private var backgroundView: UIView?
@@ -105,8 +103,6 @@ class MessageReactionPicker: UIStackView {
                     self?.delegate?.didSelectReaction(reaction: currentEmoji, isRemoving: currentEmoji == self?.selectedEmoji?.rawValue, inPosition: index)
                 }
             }
-            //MARK: Change 2
-//            buttonForEmoji[emoji.rawValue] = button
             buttonForEmoji.append((emoji.rawValue, button))
             addArrangedSubview(button)
 
@@ -130,22 +126,28 @@ class MessageReactionPicker: UIStackView {
             button.setPressedBlock { [weak self] in
                 self?.delegate?.didSelectAnyEmoji()
             }
-            // MARK: Change 3
-//            buttonForEmoji[MessageReactionPicker.anyEmojiName] = button
             buttonForEmoji.append((MessageReactionPicker.anyEmojiName, button))
             addArrangedSubview(button)
         }
     }
 
     public func replaceEmojiReaction(_ oldEmoji: String, newEmoji: String, inPosition position: Int) {
-        // MARK: Change 4
-//        let button = buttonForEmoji[oldEmoji]
-        let buttonTuple = buttonForEmoji[position]
-//        if let buttonTuple = buttonTuple {
-            let button = buttonTuple.button
-            button.setTitle(title: newEmoji, font: .systemFont(ofSize: reactionFontSize), titleColor: Theme.primaryTextColor)
-//            buttonForEmoji[newEmoji] = button
-//        }
+        let currentButtonTuple = buttonForEmoji[position]
+        let currentButton = currentButtonTuple.button
+
+        // If new emoji is in currentEmojiSet, swap instead of simple replace
+        // currentButton and related items are the button currently selected
+        // newButton and related items are the button the new value previously was in
+        // replacing the currently selected button with the new emoji and replacing the new button with emoji from currently selected button
+        let emojiSet = currentEmojiSet()
+        if emojiSet.contains(newEmoji) {
+            guard let newButtonIndex = emojiSet.firstIndex(of: newEmoji) else { return }
+            let newButtonTuple = buttonForEmoji[newButtonIndex]
+            let newButton = newButtonTuple.button
+            newButton.setTitle(title: oldEmoji, font: .systemFont(ofSize: reactionFontSize), titleColor: Theme.primaryTextColor)
+        }
+
+        currentButton.setTitle(title: newEmoji, font: .systemFont(ofSize: reactionFontSize), titleColor: Theme.primaryTextColor)
     }
 
     public func currentEmojiSet() -> [String] {
@@ -226,8 +228,6 @@ class MessageReactionPicker: UIStackView {
         var previouslyFocusedButton: OWSFlatButton?
         var focusedButton: OWSFlatButton?
 
-        // MARK: Change 5
-//        if let focusedEmoji = focusedEmoji, let focusedButton = buttonForEmoji[focusedEmoji] {
         if let focusedEmoji = focusedEmoji, let focusedButton = buttonForEmoji.first(where: { $0.emoji == focusedEmoji})?.button {
             previouslyFocusedButton = focusedButton
         }
@@ -237,8 +237,6 @@ class MessageReactionPicker: UIStackView {
         for (emoji, button) in buttonForEmoji {
             guard focusArea(for: button).contains(position) else { continue }
             focusedEmoji = emoji
-            // MARK: Change 6
-//            focusedButton = buttonForEmoji[emoji]
             focusedButton = buttonForEmoji.first(where: { $0.emoji == emoji })?.button
             break
         }
